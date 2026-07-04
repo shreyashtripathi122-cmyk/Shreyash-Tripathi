@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Car Racing - ShreyashVerse</title>
+<style>
+    body { background: #0f172a; color: white; text-align: center; font-family: Arial; margin: 0; padding: 10px; }
+    h1 { color: #00ff00; margin: 5px; }
+    #score { font-size: 24px; font-weight: bold; color: #00ff00; }
+    canvas { background: #228B22; border: 3px solid #334155; border-radius: 8px; max-width: 95vw; }
+    #controls { display: none; justify-content: center; gap: 20px; margin-top: 10px; }
+    #controls button { width: 80px; height: 80px; font-size: 30px; background: #1e293b; color: white; border: 2px solid #334155; border-radius: 15px; }
+    #controls button:active { background: #00c8ff; }
+    @media (max-width: 768px) { #controls { display: flex; } }
+    #msg { font-size: 20px; color: #ff1493; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<h1>Car Racing 🏎️</h1>
+<div id="score">Score: 0</div>
+<canvas id="game"></canvas>
+<div id="msg">Use ← → or Buttons to Move</div>
+
+<div id="controls">
+    <button id="leftBtn">←</button>
+    <button id="rightBtn">→</button>
+</div>
+<button id="restartBtn" style="display:none; margin-top:10px; padding:10px 20px; font-size:18px;">Restart - R</button>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// Mobile responsive
+canvas.width = Math.min(400, window.innerWidth - 20);
+canvas.height = 600;
+
+const W = canvas.width, H = canvas.height;
+const ROAD_W = 300 * W/400; // responsive road
+const ROAD_X = (W - ROAD_W) / 2;
+const LANE_W = ROAD_W / 3;
+const CAR_W = 40 * W/400, CAR_H = 70;
+
+let carX = ROAD_X + LANE_W + LANE_W/2 - CAR_W/2;
+let carY = H - CAR_H - 20;
+let carSpeed = 5;
+let enemies = [];
+let enemySpeed = 4;
+let score = 0;
+let gameOver = false;
+let leftPressed = false, rightPressed = false;
+let lastSpawn = 0;
+
+// Controls
+document.addEventListener("keydown", e => {
+    if(e.key === "ArrowLeft") leftPressed = true;
+    if(e.key === "ArrowRight") rightPressed = true;
+    if(e.key === "r" || e.key === "R") restart();
+});
+document.addEventListener("keyup", e => {
+    if(e.key === "ArrowLeft") leftPressed = false;
+    if(e.key === "ArrowRight") rightPressed = false;
+});
+
+// Mobile buttons
+document.getElementById("leftBtn").ontouchstart = () => leftPressed = true;
+document.getElementById("leftBtn").ontouchend = () => leftPressed = false;
+document.getElementById("rightBtn").ontouchstart = () => rightPressed = true;
+document.getElementById("rightBtn").ontouchend = () => rightPressed = false;
+document.getElementById("restartBtn").onclick = restart;
+
+function spawnEnemy() {
+    let lane = Math.floor(Math.random() * 3);
+    let enemyX = ROAD_X + lane * LANE_W + LANE_W/2 - CAR_W/2;
+    enemies.push({x: enemyX, y: -CAR_H});
+}
+
+function drawRoad() {
+    // Grass
+    ctx.fillStyle = "#228B22";
+    ctx.fillRect(0, 0, W, H);
+    // Road
+    ctx.fillStyle = "#505050";
+    ctx.fillRect(ROAD_X, 0, ROAD_W, H);
+    // Lane lines
+    ctx.fillStyle = "white";
+    for(let i = 0; i < H; i += 40) {
+        ctx.fillRect(ROAD_X + LANE_W - 5, (i + frame*8) % H, 10, 20);
+        ctx.fillRect(ROAD_X + LANE_W*2 - 5, (i + frame*8) % H, 10, 20);
+    }
+}
+
+function drawCar(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, CAR_W, CAR_H);
+    // Window
+    ctx.fillStyle = "black";
+    ctx.fillRect(x+5, y+10, CAR_W-10, 20);
+    // Lights
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(x+5, y+CAR_H-8, 10, 5);
+    ctx.fillRect(x+CAR_W-15, y+CAR_H-8, 10, 5);
+}
+
+function checkCollision(car, enemy) {
+    return car.x < enemy.x + CAR_W && car.x + CAR_W > enemy.x &&
+           car.y < enemy.y + CAR_H && car.y + CAR_H > enemy.y;
+}
+
+function restart() {
+    gameOver = false;
+    enemies = [];
+    score = 0;
+    enemySpeed = 4;
+    carX = ROAD_X + LANE_W + LANE_W/2 - CAR_W/2;
+    document.getElementById("restartBtn").style.display = "none";
+    document.getElementById("msg").innerText = "Use ← → or Buttons to Move";
+}
+
+let frame = 0;
+function gameLoop(timestamp) {
+    frame++;
+    ctx.clearRect(0, 0, W, H);
+    drawRoad();
+
+    if(!gameOver) {
+        // Car movement
+        if(leftPressed && carX > ROAD_X + 5) carX -= carSpeed;
+        if(rightPressed && carX < ROAD_X + ROAD_W - CAR_W - 5) carX += carSpeed;
+
+        // Spawn enemy every 1.2 sec
+        if(timestamp - lastSpawn > 1200) {
+            spawnEnemy();
+            lastSpawn = timestamp;
+        }
+
+        // Move enemies
+        for(let i = enemies.length-1; i >= 0; i--) {
+            let e = enemies[i];
+            e.y += enemySpeed;
+            if(e.y > H) {
+                enemies.splice(i, 1);
+                score++;
+                document.getElementById("score").innerText = `Score: ${score}`;
+                if(score % 10 === 0) enemySpeed += 0.5; // speed up
+            }
+        }
+
+        // Collision check
+        let carRect = {x: carX, y: carY};
+        for(let e of enemies) {
+            if(checkCollision(carRect, e)) {
+                gameOver = true;
+                document.getElementById("msg").innerText = "GAME OVER! Press R to Restart";
+                document.getElementById("restartBtn").style.display = "inline-block";
+            }
+        }
+    }
+
+    // Draw enemies
+    for(let e of enemies) drawCar(e.x, e.y, "red");
+    // Draw player
+    drawCar(carX, carY, "#0064FF");
+
+    if(gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "red";
+        ctx.font = "bold 40px Arial";
+        ctx.fillText("GAME OVER", W/2 - 100, H/2 - 30);
+        ctx.fillStyle = "white";
+        ctx.font = "24px Arial";
+        ctx.fillText(`Score: ${score}`, W/2 - 50, H/2);
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+
+</body>
+</html>
