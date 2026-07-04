@@ -1,35 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tic Tac Toe vs Shreyash</title>
-<style>
-    body { background: #0a0a0a; color: #fff; font-family: 'Poppins', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; flex-direction: column; }
-    h1 { color: #00c8ff; margin-bottom: 10px; }
-    #status { font-size: 1.2rem; margin-bottom: 20px; color: #b45cff; font-weight: 600; height: 25px; }
- .board { display: grid; grid-template-columns: repeat(3, 100px); grid-template-rows: repeat(3, 100px); gap: 10px; }
- .cell { width: 100px; height: 100px; background: #111; border: 2px solid #222; display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: 700; cursor: pointer; border-radius: 10px; }
- .cell.x { color: #00c8ff; }.cell.o { color: #ff00c8; }
- .btn { background: #00c8ff; color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 20px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe vs Shreyash</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        h1 { color: #00c8ff; font-size: 2.5rem; margin-bottom: 10px; }
+        #status { color: #b45cff; font-size: 1.3rem; margin-bottom: 25px; font-weight: 600; }
+       .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            background: #222;
+            padding: 10px;
+            border-radius: 15px;
+        }
+       .cell {
+            width: 100px;
+            height: 100px;
+            background: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: 0.2s;
+        }
+       .cell:hover { background: #222; }
+       .cell.x { color: #00c8ff; }
+       .cell.o { color: #b45cff; }
+        #restartBtn {
+            margin-top: 30px;
+            padding: 12px 30px;
+            font-size: 1rem;
+            background: #00c8ff;
+            color: #0a0a0a;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #restartBtn:hover { background: #b45cff; color: white; }
+       .back { margin-top: 20px; }
+       .back a { color: #00c8ff; text-decoration: none; }
+    </style>
 </head>
 <body>
-<h1>Tic Tac Toe vs Shreyash 🤖</h1>
-<div id="status">Your Turn: X</div>
-<div class="board" id="board"></div>
-<button class="btn" onclick="restartGame()">Restart</button>
-<script>
-const boardEl = document.getElementById('board'); const statusEl = document.getElementById('status');
-let board = ['', '', '']; let currentPlayer = 'X'; let gameActive = true;
-function renderBoard() { boardEl.innerHTML = ''; board.forEach((cell, index) => { const cellEl = document.createElement('div'); cellEl.classList.add('cell'); if(cell === 'X') cellEl.classList.add('x'); if(cell === 'O') cellEl.classList.add('o'); cellEl.innerText = cell; cellEl.addEventListener('click', () => handleCellClick(index)); boardEl.appendChild(cellEl); }); }
-function handleCellClick(index) { if(board[index]!== '' ||!gameActive || currentPlayer === 'O') return; board[index] = 'X'; currentPlayer = 'O'; statusEl.innerText = "Shreyash Thinking..."; renderBoard(); if(checkWinner()) return; setTimeout(shreyashMove, 700); }
-function shreyashMove() { let bestScore = -Infinity; let move; for(let i = 0; i < 9; i++) { if(board[i] === '') { board[i] = 'O'; let score = minimax(board, 0, false); board[i] = ''; if(score > bestScore) { bestScore = score; move = i; } board[move] = 'O'; currentPlayer = 'X'; statusEl.innerText = "Your Turn: X"; renderBoard(); checkWinner(); }
-function checkWinner() { const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let pattern of winPatterns) { const [a,b,c] = pattern; if(board[a] && board[a] === board[b] && board[a] === board[c]) { gameActive = false; statusEl.innerText = board[a] === 'X'? "You Won! 🎉" : "Shreyash Won! 🤖"; return true; } if(!board.includes('')) { gameActive = false; statusEl.innerText = "It's a Draw!"; return true; } return false; }
-function minimax(newBoard, depth, isMaximizing) { let scores = { X: -1, O: 1, tie: 0 }; const result = checkWinnerMinimax(newBoard); if(result!== null) return scores[result]; if(isMaximizing) { let bestScore = -Infinity; for(let i = 0; i < 9; i++) { if(newBoard[i] === '') { newBoard[i] = 'O'; let score = minimax(newBoard, depth + 1, false); newBoard[i] = ''; bestScore = Math.max(score, bestScore); } return bestScore; } else { let bestScore = Infinity; for(let i = 0; i < 9; i++) { if(newBoard[i] === '') { newBoard[i] = 'X'; let score = minimax(newBoard, depth + 1, true); newBoard[i] = ''; bestScore = Math.min(score, bestScore); } return bestScore; } }
-function checkWinnerMinimax(b) { const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]; for(let pattern of winPatterns) { const [a,b1,c] = pattern; if(b[a] && b[a] === b[b1] && b[a] === b[c]) return b[a]; } if(!b.includes('')) return 'tie'; return null; }
-function restartGame() { board = ['', '', '']; currentPlayer = 'X'; gameActive = true; statusEl.innerText = "Your Turn: X"; renderBoard(); }
-renderBoard();
-</script>
+    <h1>Tic Tac Toe vs Shreyash 🤖</h1>
+    <div id="status">Your Turn: X</div>
+
+    <div class="board" id="board">
+        <div class="cell" data-cell-index="0"></div>
+        <div class="cell" data-cell-index="1"></div>
+        <div class="cell" data-cell-index="2"></div>
+        <div class="cell" data-cell-index="3"></div>
+        <div class="cell" data-cell-index="4"></div>
+        <div class="cell" data-cell-index="5"></div>
+        <div class="cell" data-cell-index="6"></div>
+        <div class="cell" data-cell-index="7"></div>
+        <div class="cell" data-cell-index="8"></div>
+    </div>
+
+    <button id="restartBtn">Restart</button>
+    <div class="back"><a href="index.html">← Back to Portfolio</a></div>
+
+    <script>
+        const statusDisplay = document.getElementById('status');
+        const cells = document.querySelectorAll('.cell');
+        const restartBtn = document.getElementById('restartBtn');
+        let gameActive = true;
+        let currentPlayer = 'X';
+        let gameState = ["", "", ""];
+
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        function handleCellClick(clickedCellEvent) {
+            const clickedCell = clickedCellEvent.target;
+            const clickedCellIndex = parseInt(clickedCell.getAttribute('data-cell-index'));
+
+            if (gameState[clickedCellIndex]!== "" ||!gameActive) return;
+
+            handlePlayerTurn(clickedCell, clickedCellIndex);
+
+            if (gameActive) {
+                setTimeout(handleAITurn, 500);
+            }
+        }
+
+        function handlePlayerTurn(cell, index) {
+            gameState[index] = currentPlayer;
+            cell.innerHTML = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+            handleResultValidation();
+        }
+
+        function handleAITurn() {
+            currentPlayer = 'O';
+            const bestMove = findBestMove();
+            if (bestMove!== -1) {
+                gameState[bestMove] = 'O';
+                cells[bestMove].innerHTML = 'O';
+                cells[bestMove].classList.add('o');
+            }
+            currentPlayer = 'X';
+            handleResultValidation();
+        }
+
+        function findBestMove() {
+            let bestScore = -Infinity;
+            let move = -1;
+            for (let i = 0; i < 9; i++) {
+                if (gameState[i] === "") {
+                    gameState[i] = 'O';
+                    let score = minimax(gameState, 0, false);
+                    gameState[i] = "";
+                    if (score > bestScore) {
+                        bestScore = score;
+                        move = i;
+                    }
+                }
+            }
+            return move;
+        }
+
+        function minimax(state, depth, isMaximizing) {
+            let result = checkWinner(state);
+            if (result!== null) {
+                if (result === 'O') return 10 - depth;
+                if (result === 'X') return depth - 10;
+                if (result === 'draw') return 0;
+            }
+
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (state[i] === "") {
+                        state[i] = 'O';
+                        let score = minimax(state, depth + 1, false);
+                        state[i] = "";
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (state[i] === "") {
+                        state[i] = 'X';
+                        let score = minimax(state, depth + 1, true);
+                        state[i] = "";
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                return bestScore;
+            }
+        }
+
+        function checkWinner(board) {
+            for (let i = 0; i < winningConditions.length; i++) {
+                const [a, b, c] = winningConditions[i];
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return board[a];
+                }
+            }
+            if (!board.includes("")) return 'draw';
+            return null;
+        }
+
+        function handleResultValidation() {
+            let result = checkWinner(gameState);
+            if (result === 'X') {
+                statusDisplay.innerHTML = "You Win! 🎉";
+                gameActive = false;
+            } else if (result === 'O') {
+                statusDisplay.innerHTML = "Shreyash AI Wins! 🤖";
+                gameActive = false;
+            } else if (result === 'draw') {
+                statusDisplay.innerHTML = "Game Draw! 🤝";
+                gameActive = false;
+            } else {
+                statusDisplay.innerHTML = `Your Turn: ${currentPlayer}`;
+            }
+        }
+
+        function handleRestartGame() {
+            gameActive = true;
+            currentPlayer = 'X';
+            gameState = ["", "", ""];
+            statusDisplay.innerHTML = "Your Turn: X";
+            cells.forEach(cell => {
+                cell.innerHTML = "";
+                cell.classList.remove('x', 'o');
+            });
+        }
+
+        cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+        restartBtn.addEventListener('click', handleRestartGame);
+    </script>
 </body>
 </html>
