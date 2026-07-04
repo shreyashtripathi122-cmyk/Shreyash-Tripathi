@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pong - Hit Score - ShreyashVerse</title>
+<style>
+    body { background: #0f172a; color: white; text-align: center; font-family: Arial; margin: 0; padding: 10px; overflow: hidden; }
+    h1 { color: #00c8ff; margin: 5px; font-size: 20px; }
+    #score { font-size: 24px; font-weight: bold; margin: 5px 0; color: #00ff00; }
+    #timer { font-size: 18px; color: #ff1493; }
+    canvas { background: #000; border: 3px solid #334155; border-radius: 8px; max-width: 95vw; }
+    
+    /* Mobile Controls */
+    #controls { margin-top: 10px; display: none; justify-content: center; gap: 30px; }
+    #controls button { 
+        width: 80px; height: 80px; font-size: 40px; 
+        background: #1e293b; color: white; border: 2px solid #00c8ff; 
+        border-radius: 50%; touch-action: manipulation;
+    }
+    #controls button:active { background: #00c8ff; color: black; }
+    @media (max-width: 768px) { #controls { display: flex; } }
+</style>
+</head>
+<body>
+
+<h1>Pong: Player vs Shreyash 🤖</h1>
+<div id="score">Player: 0 - Shreyash: 0</div>
+<div id="timer">Time: 60s</div>
+<canvas id="pong"></canvas>
+
+<div id="controls">
+    <button id="upBtn">↑</button>
+    <button id="downBtn">↓</button>
+</div>
+
+<script>
+const canvas = document.getElementById('pong');
+const ctx = canvas.getContext('2d');
+
+// Mobile responsive canvas
+canvas.width = Math.min(800, window.innerWidth - 20);
+canvas.height = canvas.width * 500/800;
+
+const paddleWidth = 15, paddleHeight = 100;
+let playerY = canvas.height/2 - paddleHeight/2; // Player LEFT
+let shreyashY = canvas.height/2 - paddleHeight/2; // Shreyash RIGHT
+const ballSize = 15;
+let ballX = canvas.width/2, ballY = canvas.height/2;
+let ballSpeedX = 6, ballSpeedY = 6;
+
+let playerScore = 0, shreyashScore = 0;
+let timeLeft = 60;
+let gameOver = false;
+let upPressed = false, downPressed = false;
+
+// PC Keyboard
+document.addEventListener('keydown', e => {
+    if(e.key === 'ArrowUp') upPressed = true;
+    if(e.key === 'ArrowDown') downPressed = true;
+});
+document.addEventListener('keyup', e => {
+    if(e.key === 'ArrowUp') upPressed = false;
+    if(e.key === 'ArrowDown') downPressed = false;
+});
+
+// Mobile Touch Buttons
+document.getElementById('upBtn').ontouchstart = () => upPressed = true;
+document.getElementById('upBtn').ontouchend = () => upPressed = false;
+document.getElementById('downBtn').ontouchstart = () => downPressed = true;
+document.getElementById('downBtn').ontouchend = () => downPressed = false;
+
+// Timer
+setInterval(() => {
+    if(timeLeft > 0 && !gameOver) {
+        timeLeft--;
+        document.getElementById('timer').innerText = `Time: ${timeLeft}s`;
+        if(timeLeft === 0) {
+            gameOver = true;
+            let winner = playerScore > shreyashScore ? "Player Wins! 🏆" : shreyashScore > playerScore ? "Shreyash Wins! 🤖" : "Draw!";
+            document.getElementById('timer').innerText = `Game Over! ${winner}`;
+        }
+    }
+}, 1000);
+
+function resetBall() {
+    ballX = canvas.width/2 - ballSize/2;
+    ballY = canvas.height/2 - ballSize/2;
+    ballSpeedX = 6 * (Math.random() > 0.5 ? 1 : -1);
+    ballSpeedY = 6 * (Math.random() > 0.5 ? 1 : -1);
+}
+
+function update() {
+    if(gameOver) return;
+
+    // Player move
+    if(upPressed && playerY > 0) playerY -= 8;
+    if(downPressed && playerY < canvas.height - paddleHeight) playerY += 8;
+
+    // Shreyash AI
+    let targetY = ballY - paddleHeight/2;
+    if(shreyashY < targetY) shreyashY += 5.8;
+    if(shreyashY > targetY) shreyashY -= 5.8;
+    shreyashY = Math.max(0, Math.min(canvas.height - paddleHeight, shreyashY));
+
+    // Ball move
+    ballX += ballSpeedX;
+    ballY += ballSpeedY;
+
+    // Wall
+    if(ballY <= 0) { ballY = 0; ballSpeedY *= -1; }
+    if(ballY >= canvas.height - ballSize) { ballY = canvas.height - ballSize; ballSpeedY *= -1; }
+
+    // Player Hit = Player +1
+    if(ballX < paddleWidth && ballY + ballSize > playerY && ballY < playerY + paddleHeight) {
+        ballX = paddleWidth;
+        ballSpeedX = Math.abs(ballSpeedX) * 1.03;
+        playerScore++;
+        document.getElementById('score').innerText = `Player: ${playerScore} - Shreyash: ${shreyashScore}`;
+    }
+
+    // Shreyash Hit = Shreyash +1
+    if(ballX + ballSize > canvas.width - paddleWidth && ballY + ballSize > shreyashY && ballY < shreyashY + paddleHeight) {
+        ballX = canvas.width - paddleWidth - ballSize;
+        ballSpeedX = -Math.abs(ballSpeedX) * 1.03;
+        shreyashScore++;
+        document.getElementById('score').innerText = `Player: ${playerScore} - Shreyash: ${shreyashScore}`;
+    }
+
+    // Ball bahar gayi to reset
+    if(ballX < 0 || ballX > canvas.width) {
+        resetBall();
+    }
+}
+
+function draw() {
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Dotted line
+    ctx.strokeStyle = '#334155';
+    ctx.setLineDash([8, 12]);
+    ctx.beginPath();
+    ctx.moveTo(canvas.width/2, 0);
+    ctx.lineTo(canvas.width/2, canvas.height);
+    ctx.stroke();
+
+    // Paddles
+    ctx.fillStyle = '#00c8ff'; // Player
+    ctx.fillRect(0, playerY, paddleWidth, paddleHeight);
+    ctx.fillStyle = '#ff1493'; // Shreyash
+    ctx.fillRect(canvas.width - paddleWidth, shreyashY, paddleWidth, paddleHeight);
+
+    // Ball
+    ctx.fillStyle = 'white';
+    ctx.fillRect(ballX, ballY, ballSize, ballSize);
+}
+
+function game() {
+    update();
+    draw();
+    requestAnimationFrame(game);
+}
+
+resetBall();
+game();
+</script>
+
+</body>
+</html>
